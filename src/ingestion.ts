@@ -30,21 +30,24 @@ const loadDocs = async (docs: any[]) => {
   await Promise.all(
     docs.map(async (document) => {
       await fsPromises.writeFile(
-        `./domain-knowledge/${document.id}.json`,
-        JSON.stringify(document)
+        `./domain-knowledge/${document.title}-${document.id}.json`,
+        JSON.stringify({
+          title: document.title,
+          text: document.text,
+          collectionId: document.collectionId,
+          parentDocumentId: document.parentDocumentId,
+          updatedAt: document.updatedAt,
+          createdAt: document.createdAt,
+          publishedAt: document.publishedAt,
+          deletedAt: document.deletedAt,
+          id: document.id,
+          tags: document.tags,
+        })
       );
-      const loader = new JSONLoader(`./domain-knowledge/${document.id}.json`, [
-        '/title',
-        '/text',
-        '/updatedAt',
-        '/createdAt',
-        '/publishedAt',
-        '/deletedAt',
-        '/id',
-        '/tags',
-        '/collectionId',
-        '/parentDocumentId',
-      ]);
+      const loader = new JSONLoader(
+        `./domain-knowledge/${document.title}-${document.id}.json`,
+        ['/title', '/text']
+      );
       const langChainDocs = await loader.load();
       const allSplits = await splitter.splitDocuments(langChainDocs);
       await vectorStore.addDocuments(allSplits);

@@ -5,7 +5,8 @@
   "main": "src/ingestion.ts",
   "scripts": {
     "build": "tsc",
-    "start": "ts-node src/ingestion.ts"
+    "ingest": "ts-node src/ingestion.ts",
+    "start": "ts-node src/chat.ts"
   },
   "repository": {
     "type": "git",
@@ -20,6 +21,7 @@
   "dependencies": {
     "@langchain/community": "^0.3.28",
     "@langchain/core": "^0.3.37",
+    "@langchain/langgraph": "^0.2.44",
     "@langchain/ollama": "^0.1.5",
     "axios": "^1.7.9",
     "dotenv": "^16.4.7",
