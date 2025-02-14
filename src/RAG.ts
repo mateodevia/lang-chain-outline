@@ -6,6 +6,8 @@ import { Annotation } from '@langchain/langgraph';
 import { PGVectorStore } from '@langchain/community/vectorstores/pgvector';
 import { OllamaEmbeddings } from '@langchain/ollama';
 import { StateGraph } from "@langchain/langgraph";
+import { InMemoryStore } from "@langchain/core/stores";
+import { MultiVectorRetriever } from "langchain/retrievers/multi_vector";
 require('dotenv').config();
 
 const InputStateAnnotation = Annotation.Root({
@@ -38,8 +40,15 @@ export const getRAG = async () => {
   });
 
   const retrieve = async (state: typeof InputStateAnnotation.State) => {
-    const retrievedDocs = await vectorStore.similaritySearch(state.question);
-    return { context: retrievedDocs };
+    const retriever = new MultiVectorRetriever({
+      vectorstore: vectorStore,
+      byteStore: new InMemoryStore<Uint8Array>(),
+      idKey: 'parent_id',
+      childK: 20,
+      parentK: 5,
+    });
+    const vectorstoreResult = await retriever.vectorstore.similaritySearch(state.question);
+    return { context: vectorstoreResult };
   };
 
   const generate = async (state: typeof StateAnnotation.State) => {

@@ -1,25 +1,60 @@
-import axios from 'axios';
 import * as fsPromises from 'fs/promises';
-import { JSONLoader } from 'langchain/document_loaders/fs/json';
-import { RecursiveCharacterTextSplitter } from '@langchain/textsplitters';
+import { TextLoader } from 'langchain/document_loaders/fs/text';
+import { MarkdownTextSplitter } from '@langchain/textsplitters';
 import { PGVectorStore } from '@langchain/community/vectorstores/pgvector';
 import { OllamaEmbeddings } from '@langchain/ollama';
-import async from 'async';
+import { requestDocumentById, requestLatestOutlineDocs } from './outline-api/document-service';
+import { requestCollectionById } from './outline-api/collection-service';
+import { Document } from '@langchain/core/documents';
 
 require('dotenv').config();
 
-const pageSize = 100;
-
-const splitter = new RecursiveCharacterTextSplitter({
-  chunkSize: 1000,
-  chunkOverlap: 200,
+const splitter = new MarkdownTextSplitter({
+  chunkSize: 400,
+  chunkOverlap: 0,
 });
 
 const embeddings = new OllamaEmbeddings({
   model: 'deepseek-r1:8b',
 });
 
-const loadDocs = async (docs: any[]) => {
+const generateDocumentChunks = async (document: any) => {
+    return await splitter.splitDocuments([
+      new Document({ pageContent: `# ${document.title}\n${document.text}` }),
+    ]);
+}
+
+const addSemanticMeaningAndLoadDoc = async (document: any, vectorStore: PGVectorStore) => {
+  // Add parent document title to add more semantic meaning to the generated documents
+  if (document.parentDocumentId) {
+    const parentDocument = await requestDocumentById(document.parentDocumentId);
+    document.parentDocument = parentDocument.title;
+  }
+
+  // Add collection title to add more semantic meaning to the generated documents
+  if (document.collectionId) {
+    const collection = await requestCollectionById(document.collectionId);
+    document.collection = collection.title;
+  }
+
+  const generatedDocs = await generateDocumentChunks(document);
+
+  // Add relevant metadata to the generated documents
+  generatedDocs.forEach((doc) => {
+    doc.metadata['title'] = document.title;
+    doc.metadata['parent_document'] = document.parentDocument;
+    doc.metadata['collection'] = document.collection;
+    doc.metadata['updated_at'] = document.updatedAt;
+    doc.metadata['created_at'] = document.createdAt;
+    doc.metadata['published_at'] = document.publishedAt;
+    doc.metadata['deleted_at'] = document.deletedAt;
+    doc.metadata['tags'] = document.tags;
+  });
+  
+  await vectorStore.addDocuments(generatedDocs);
+}
+
+const loadDocsToVectorDB = async (docs: any[]) => {
   const vectorStore = await PGVectorStore.initialize(embeddings, {
     tableName: 'outline_docs',
     postgresConnectionOptions: {
@@ -29,73 +64,31 @@ const loadDocs = async (docs: any[]) => {
   let i = 0;
   await Promise.all(
     docs.map(async (document) => {
-      await fsPromises.writeFile(
-        `./domain-knowledge/${document.title}-${document.id}.json`,
-        JSON.stringify({
-          title: document.title,
-          text: document.text,
-          collectionId: document.collectionId,
-          parentDocumentId: document.parentDocumentId,
-          updatedAt: document.updatedAt,
-          createdAt: document.createdAt,
-          publishedAt: document.publishedAt,
-          deletedAt: document.deletedAt,
-          id: document.id,
-          tags: document.tags,
-        })
-      );
-      const loader = new JSONLoader(
-        `./domain-knowledge/${document.title}-${document.id}.json`,
-        ['/title', '/text']
-      );
-      const langChainDocs = await loader.load();
-      const allSplits = await splitter.splitDocuments(langChainDocs);
-      await vectorStore.addDocuments(allSplits);
-      i++;
+      await addSemanticMeaningAndLoadDoc(document, vectorStore);
       console.log(`Document ${document.title} was uploaded. Total: ${i}`);
+      i++;
       return;
     })
   );
 };
 
-const requestLatestOutlineDocs = async (p: { page: number }) => {
-  const { page } = p;
-  console.log(
-    `Requesting page ${page}: offset=${page * pageSize}, limit=${pageSize}`
-  );
-  return axios.post(
-    `${process.env.OUTLINE_URL}/api/documents.list`,
-    {
-      offset: page * pageSize,
-      limit: pageSize,
-      sort: 'updatedAt',
-      direction: 'DESC',
-    },
-    {
-      headers: {
-        'content-type': 'application/json',
-        accept: 'application/json',
-        Authorization: `Bearer ${process.env.OUTLINE_API_KEY}`,
-      },
-    }
-  );
-};
-
-const ingestDocsToVectorDB = async () => {
+const ingest = async () => {
   let page = 0;
-  const response = await requestLatestOutlineDocs({ page });
-  await loadDocs(response.data.data);
+  const pageSize = 100;
+
+  const response = await requestLatestOutlineDocs({ page, pageSize });
+  console.log(`Total documents: ${response.pagination.total}`);
+  await loadDocsToVectorDB(response.data);
 
   // Check if there are more documents to load
-  console.log(`Total documents: ${response.data.pagination.total}`);
-  if (response.data.pagination.total > pageSize) {
-    const totalPages = Math.ceil(response.data.pagination.total / pageSize);
+  if (response.pagination.total > pageSize) {
+    const totalPages = Math.ceil(response.pagination.total / pageSize);
     console.log(`Total pages: ${totalPages}`);
     for (let i = 1; i < totalPages; i++) {
-      const response = await requestLatestOutlineDocs({ page: i });
-      await loadDocs(response.data.data);
+      const response = await requestLatestOutlineDocs({ page: i, pageSize });
+      await loadDocsToVectorDB(response.data);
     }
   }
 };
 
-ingestDocsToVectorDB();
+ingest();
