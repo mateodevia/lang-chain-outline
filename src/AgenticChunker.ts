@@ -14,7 +14,7 @@ require('dotenv').config();
  */
 function extractJsonFromBackticks(input: string, identifier: string): string[] {
   // Regular expression to match content between triple backticks
-  const codeBlockRegex = /` .*?\n([\s\S]*?)\n `/gm;
+  const codeBlockRegex = /```json\s*\n([\s\S]*?)\n```/gm;
 
   const match = codeBlockRegex.exec(input);
   if (!match || !match[1]) {
@@ -27,8 +27,8 @@ function extractJsonFromBackticks(input: string, identifier: string): string[] {
     if (Array.isArray(parsedJson)) {
       return parsedJson;
     } else {
-        console.error(`No information found in ${identifier}`);
-        return [];
+      console.error(`No information found in ${identifier}`);
+      return [];
     }
   } catch (e) {
     console.error(`Failed to parse JSON in ${identifier}`);
@@ -43,7 +43,7 @@ The following json object is part of a kwoledge base of a tech company.
 Decompose the "text" property into clear and simple propositions, ensuring they are interpretable out of context.
 The "text" property is written in Markdown format.
 The propositions should be structured as simple sentences in spanish.
-Always take into account the "parentDocument" and "collection" properties of the json to add more semantic meaning to the generated propositions and to add extra context to the preposition.
+Always take into account the "parentDocument", "collection", "title", and "url" properties of the json to add more semantic meaning to the generated propositions and to add extra context to the preposition.
 If there are resources such as images, tables, or external links, add them as propositios with the necessary context so that they can be retrieved later.
 
 1. Split compound sentence into simple sentences in spanish. Maintain the original phrasing from the input
@@ -53,31 +53,40 @@ information into its own distinct proposition.
 3. Decontextualize the proposition by adding necessary modifier to nouns or entire sentences
 and replacing pronouns (e.g., "el", "la", "los" "las", "esto", "este", "esta", "eso", "ese", "esa") with the full name of the
 entities they refer to.
-4. Always present the results as a list of strings, formatted in JSON surrounded by triple backticks.
+4. Always present the results as a list of strings, formatted as a JSON array.
 
 {document}
 `
   );
   const chain = chunkerPrompt.pipe(chunckerModel);
-  const response = await chain.invoke({ document });
-  const chunks = extractJsonFromBackticks(response.content.toString(), document.title);
-  return chunks.map(
-    (chunk) =>
-      new Document({
-        pageContent: chunk,
-        metadata: {
-          id: document.id,
-          title: document.title,
-          parentDocumentId: document.parentDocumentId,
-          parentDocument: document.parentDocument,
-          collectionId: document.collectionId,
-          collection: document.collection,
-          updatedAt: document.updatedAt,
-          createdAt: document.createdAt,
-          publishedAt: document.publishedAt,
-          deletedAt: document.deletedAt,
-          tags: document.tags,
-        },
-      })
-  );
+  try {
+    const response = await chain.invoke({ document });
+
+    const chunks = extractJsonFromBackticks(
+      response.content.toString(),
+      document.title
+    );
+    return chunks.map(
+      (chunk) =>
+        new Document({
+          pageContent: chunk,
+          metadata: {
+            id: document.id,
+            title: document.title,
+            parentDocumentId: document.parentDocumentId,
+            parentDocument: document.parentDocument,
+            collectionId: document.collectionId,
+            collection: document.collection,
+            updatedAt: document.updatedAt,
+            createdAt: document.createdAt,
+            publishedAt: document.publishedAt,
+            deletedAt: document.deletedAt,
+            tags: document.tags,
+          },
+        })
+    );
+  } catch (e) {
+    console.error(`Failed to generate document chunks for ${document.title}`);
+    return [];
+  }
 };

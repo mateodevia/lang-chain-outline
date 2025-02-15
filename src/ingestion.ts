@@ -29,10 +29,8 @@ const addSemanticMeaningAndLoadDoc = async (document: any, vectorStore: PGVector
   }
 
   const generatedDocs = await generateDocumentChunks(document);
-  console.log(`Document ${document.title} was chunked.`);
   
   if (generateDocumentChunks.length) await vectorStore.addDocuments(generatedDocs);
-  console.log(`Document ${document.title} was uploaded.`);
 }
 
 const loadDocsToVectorDB = async (docs: any[]) => {
@@ -50,7 +48,7 @@ const loadDocsToVectorDB = async (docs: any[]) => {
         return;
       };
       await addSemanticMeaningAndLoadDoc(document, vectorStore);
-      console.log(`Document ${document.title} was uploaded. Total: ${i}`);
+      console.log(`Document ${document.title} was uploaded. Total documents uploaded: ${i}`);
       i++;
       return;
     })
