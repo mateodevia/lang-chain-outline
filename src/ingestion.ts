@@ -44,7 +44,8 @@ const loadDocsToVectorDB = async (docs: any[]) => {
   await Promise.all(
     docs.map(async (document) => {
       if (await documentWasAlreadyLoaded(document)) {   
-        console.log(`Document ${document.title} will be skipped because it was already uploaded.`);
+        console.log(`Document ${document.title} will be skipped because it was already uploaded. ${i}`);
+        i++;
         return;
       };
       await addSemanticMeaningAndLoadDoc(document, vectorStore);
