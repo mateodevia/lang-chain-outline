@@ -1,4 +1,5 @@
 import { getRAG } from './RAG';
+require('dotenv').config();
 
 const generateResponse = async (question: string) => {
   const rag = await getRAG();
@@ -7,4 +8,4 @@ const generateResponse = async (question: string) => {
   console.log(`\nAnswer: ${result['answer']}`);
 };
 
-generateResponse('Qué es power cash?');
+generateResponse('Como genero migraciones?');

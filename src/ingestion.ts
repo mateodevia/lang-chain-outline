@@ -1,28 +1,10 @@
-import * as fsPromises from 'fs/promises';
-import { TextLoader } from 'langchain/document_loaders/fs/text';
-import { MarkdownTextSplitter } from '@langchain/textsplitters';
 import { PGVectorStore } from '@langchain/community/vectorstores/pgvector';
-import { OllamaEmbeddings } from '@langchain/ollama';
 import { requestDocumentById, requestLatestOutlineDocs } from './outline-api/document-service';
 import { requestCollectionById } from './outline-api/collection-service';
-import { Document } from '@langchain/core/documents';
+import { generateDocumentChunks } from './AgenticChunker';
+import { embeddingModel } from './LLMs';
 
 require('dotenv').config();
-
-const splitter = new MarkdownTextSplitter({
-  chunkSize: 400,
-  chunkOverlap: 0,
-});
-
-const embeddings = new OllamaEmbeddings({
-  model: 'deepseek-r1:8b',
-});
-
-const generateDocumentChunks = async (document: any) => {
-    return await splitter.splitDocuments([
-      new Document({ pageContent: `# ${document.title}\n${document.text}` }),
-    ]);
-}
 
 const addSemanticMeaningAndLoadDoc = async (document: any, vectorStore: PGVectorStore) => {
   // Add parent document title to add more semantic meaning to the generated documents
@@ -38,24 +20,14 @@ const addSemanticMeaningAndLoadDoc = async (document: any, vectorStore: PGVector
   }
 
   const generatedDocs = await generateDocumentChunks(document);
-
-  // Add relevant metadata to the generated documents
-  generatedDocs.forEach((doc) => {
-    doc.metadata['title'] = document.title;
-    doc.metadata['parent_document'] = document.parentDocument;
-    doc.metadata['collection'] = document.collection;
-    doc.metadata['updated_at'] = document.updatedAt;
-    doc.metadata['created_at'] = document.createdAt;
-    doc.metadata['published_at'] = document.publishedAt;
-    doc.metadata['deleted_at'] = document.deletedAt;
-    doc.metadata['tags'] = document.tags;
-  });
+  console.log(`Generated ${generatedDocs.length} documents for ${document.title}`);
   
-  await vectorStore.addDocuments(generatedDocs);
+  if (generateDocumentChunks.length) await vectorStore.addDocuments(generatedDocs);
+  console.log(`Document ${document.title} was uploaded.`);
 }
 
 const loadDocsToVectorDB = async (docs: any[]) => {
-  const vectorStore = await PGVectorStore.initialize(embeddings, {
+  const vectorStore = await PGVectorStore.initialize(embeddingModel, {
     tableName: 'outline_docs',
     postgresConnectionOptions: {
       connectionString: process.env.PG_CONNECTION_STRING,
