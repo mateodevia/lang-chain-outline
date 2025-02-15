@@ -41,7 +41,7 @@ function extractJsonFromBackticks(input: string): string[] {
 export const generateDocumentChunks = async (document: any) => {
   const chunkerPrompt = ChatPromptTemplate.fromTemplate(
     `
-The following json object is part of a kwoledge base of a tech company that provides varios finantial services through varios inhouse platforms.
+The following json object is part of a kwoledge base of a tech company.
 Decompose the "text" property into clear and simple propositions, ensuring they are interpretable out of context.
 The "text" property is written in Markdown format.
 The propositions should be structured as simple sentences in spanish.
