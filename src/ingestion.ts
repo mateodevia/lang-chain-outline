@@ -3,8 +3,17 @@ import { requestDocumentById, requestLatestOutlineDocs } from './outline-api/doc
 import { requestCollectionById } from './outline-api/collection-service';
 import { generateDocumentChunks } from './AgenticChunker';
 import { embeddingModel } from './LLMs';
+import { queryDB } from './database/database';
 
 require('dotenv').config();
+
+const documentWasAlreadyLoaded = async(document: any) => {
+  const documentExists = await queryDB(`SELECT * FROM outline_docs WHERE metadata->>'id' = '${document.id}'`);
+  if (documentExists?.length) {
+    return true;
+  }
+  return false;
+}
 
 const addSemanticMeaningAndLoadDoc = async (document: any, vectorStore: PGVectorStore) => {
   // Add parent document title to add more semantic meaning to the generated documents
@@ -20,7 +29,7 @@ const addSemanticMeaningAndLoadDoc = async (document: any, vectorStore: PGVector
   }
 
   const generatedDocs = await generateDocumentChunks(document);
-  console.log(`Generated ${generatedDocs.length} documents for ${document.title}`);
+  console.log(`Document ${document.title} was chunked.`);
   
   if (generateDocumentChunks.length) await vectorStore.addDocuments(generatedDocs);
   console.log(`Document ${document.title} was uploaded.`);
@@ -36,6 +45,10 @@ const loadDocsToVectorDB = async (docs: any[]) => {
   let i = 0;
   await Promise.all(
     docs.map(async (document) => {
+      if (await documentWasAlreadyLoaded(document)) {   
+        console.log(`Document ${document.title} will be skipped because it was already uploaded.`);
+        return;
+      };
       await addSemanticMeaningAndLoadDoc(document, vectorStore);
       console.log(`Document ${document.title} was uploaded. Total: ${i}`);
       i++;

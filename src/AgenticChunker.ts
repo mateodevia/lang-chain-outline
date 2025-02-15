@@ -9,16 +9,16 @@ require('dotenv').config();
 /**
  * Extracts JSON content from markdown-style triple backtick code blocks
  * @param input String containing markdown with code blocks
+ * @param identifier Identifier of the code block to extract
  * @returns Parsed JSON object
  */
-function extractJsonFromBackticks(input: string): string[] {
+function extractJsonFromBackticks(input: string, identifier: string): string[] {
   // Regular expression to match content between triple backticks
   const codeBlockRegex = /` .*?\n([\s\S]*?)\n `/gm;
 
   const match = codeBlockRegex.exec(input);
   if (!match || !match[1]) {
-    console.log(input);
-    console.error('No information found in code block');
+    console.error(`No code block found in for ${identifier}`);
     return [];
   }
 
@@ -27,13 +27,11 @@ function extractJsonFromBackticks(input: string): string[] {
     if (Array.isArray(parsedJson)) {
       return parsedJson;
     } else {
-        console.log(input);
-        console.error('No information found in code block');
+        console.error(`No information found in ${identifier}`);
         return [];
     }
   } catch (e) {
-    console.log(input);
-    console.error(`Failed to parse JSON: ${(e as Error).message}`);
+    console.error(`Failed to parse JSON in ${identifier}`);
     return [];
   }
 }
@@ -48,28 +46,31 @@ The propositions should be structured as simple sentences in spanish.
 Always take into account the "parentDocument" and "collection" properties of the json to add more semantic meaning to the generated propositions and to add extra context to the preposition.
 If there are resources such as images, tables, or external links, add them as propositios with the necessary context so that they can be retrieved later.
 
-1.⁠ ⁠Split compound sentence into simple sentences in spanish. Maintain the original phrasing from the input
+1. Split compound sentence into simple sentences in spanish. Maintain the original phrasing from the input
 whenever possible.
-2.⁠ ⁠For any named entity that is accompanied by additional descriptive information, separate this
+2. For any named entity that is accompanied by additional descriptive information, separate this
 information into its own distinct proposition.
-3.⁠ ⁠Decontextualize the proposition by adding necessary modifier to nouns or entire sentences
+3. Decontextualize the proposition by adding necessary modifier to nouns or entire sentences
 and replacing pronouns (e.g., "el", "la", "los" "las", "esto", "este", "esta", "eso", "ese", "esa") with the full name of the
 entities they refer to.
-4.⁠ ⁠Present the results as a list of strings, formatted in JSON.
+4. Always present the results as a list of strings, formatted in JSON surrounded by triple backticks.
 
 {document}
 `
   );
   const chain = chunkerPrompt.pipe(chunckerModel);
   const response = await chain.invoke({ document });
-  const chunks = extractJsonFromBackticks(response.content.toString());
+  const chunks = extractJsonFromBackticks(response.content.toString(), document.title);
   return chunks.map(
     (chunk) =>
       new Document({
         pageContent: chunk,
         metadata: {
+          id: document.id,
           title: document.title,
+          parentDocumentId: document.parentDocumentId,
           parentDocument: document.parentDocument,
+          collectionId: document.collectionId,
           collection: document.collection,
           updatedAt: document.updatedAt,
           createdAt: document.createdAt,
