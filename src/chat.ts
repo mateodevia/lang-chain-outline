@@ -50,7 +50,7 @@ class ChatInterface {
       chalk.green('Response received:');
       
       this.printMessage('You', input, chalk.blue);
-      this.printMessage('Assistant', result['answer'], chalk.green);
+      this.printMessage('Assistant', result['answer'].split('</think>')[1], chalk.green);
       
       if (this.showContext) {
         this.printMessage('Context', result['context'], chalk.magenta);
