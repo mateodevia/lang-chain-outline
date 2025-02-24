@@ -93,7 +93,7 @@ information into its own distinct proposition.
 3. Decontextualize the proposition by adding necessary modifier to nouns or entire sentences
 and replacing pronouns (e.g., "el", "la", "los" "las", "esto", "este", "esta", "eso", "ese", "esa") with the full name of the
 entities they refer to.
-4. Always present the results as a list of strings, formatted as a JSON array.
+4. Always present the results as a list of strings, formatted as a JSON array. If the "text" property is empty, return an empty array.
 
 {document}
 `
