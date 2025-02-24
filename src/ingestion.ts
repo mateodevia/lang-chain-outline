@@ -4,6 +4,7 @@ import { requestCollectionById } from './outline-api/collection-service';
 import { generateDocumentChunks } from './AgenticChunker';
 import { embeddingModel } from './LLMs';
 import { queryDB } from './database/database';
+import chalk from 'chalk';
 
 require('dotenv').config();
 
@@ -29,8 +30,7 @@ const addSemanticMeaningAndLoadDoc = async (document: any, vectorStore: PGVector
   }
 
   const generatedDocs = await generateDocumentChunks(document);
-  
-  if (generateDocumentChunks.length) await vectorStore.addDocuments(generatedDocs);
+  if (generatedDocs.length) await vectorStore.addDocuments(generatedDocs);
 }
 
 const loadDocsToVectorDB = async (docs: any[]) => {
@@ -44,12 +44,12 @@ const loadDocsToVectorDB = async (docs: any[]) => {
   await Promise.all(
     docs.map(async (document) => {
       if (await documentWasAlreadyLoaded(document)) {   
-        console.log(`Document ${document.title} will be skipped because it was already uploaded. ${i}`);
+        console.log(`Document ${document.parentDocument} > ${document.title} will be skipped because it was already uploaded. ${i}`);
         i++;
         return;
       };
       await addSemanticMeaningAndLoadDoc(document, vectorStore);
-      console.log(`Document ${document.title} was uploaded. Total documents uploaded: ${i}`);
+      console.log(`Document ${document.parentDocument} > ${document.title} was processed. Total documents processed: ${i}`);
       i++;
       return;
     })
@@ -73,6 +73,7 @@ const ingest = async () => {
       await loadDocsToVectorDB(response.data);
     }
   }
+  console.log(chalk.green('Ingestion finished'));
 };
 
 ingest();

@@ -41,5 +41,5 @@ export const requestDocumentById = async (documentId: string) => {
                 Authorization: `Bearer ${process.env.OUTLINE_API_KEY}`,
             },
         }
-    )).data;
+    )).data.data;
 };

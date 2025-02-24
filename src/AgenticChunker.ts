@@ -1,6 +1,5 @@
 import { ChatPromptTemplate } from '@langchain/core/prompts';
-import { ChatOllama } from '@langchain/ollama';
-import { ChatGroq } from '@langchain/groq';
+import chalk from 'chalk';
 import { Document } from '@langchain/core/documents';
 import { chunckerModel } from './LLMs';
 
@@ -18,7 +17,7 @@ function extractJsonFromBackticks(input: string, identifier: string): string[] {
 
   const match = codeBlockRegex.exec(input);
   if (!match || !match[1]) {
-    console.error(`No code block found in for ${identifier}`);
+    console.error(`${chalk.red(`Failed to generate document chunks for ${identifier}:`)} ${input}`);
     return [];
   }
 
@@ -27,16 +26,57 @@ function extractJsonFromBackticks(input: string, identifier: string): string[] {
     if (Array.isArray(parsedJson)) {
       return parsedJson;
     } else {
-      console.error(`No information found in ${identifier}`);
+      console.error(chalk.red(`No information found in ${identifier}:`));
       return [];
     }
   } catch (e) {
-    console.error(`Failed to parse JSON in ${identifier}`);
+    console.error(chalk.red(`Failed to parse JSON in ${identifier}:`));
     return [];
   }
 }
 
+
+/**
+ * Validates if a document is suitable for chunking based on various criteria.
+ * 
+ * @param document - The document object to validate
+ * @returns {boolean} Returns true if the document is valid for chunking, false otherwise
+ * 
+ * The function checks if:
+ * - Document has text content
+ * - Text is not just newline characters
+ * - Text length is within MAX_DOC_SIZE limit (if specified)
+ * - Text contains non-whitespace characters after trimming
+ */
+const isDocumentValidForChunking = (document: any) => {
+  if (!document.text) {
+    console.log(chalk.yellow(`${document.parentDocument} > ${document.title}  is empty. It will be skipped.`));
+    return false;
+  };
+  
+  if (/^(\n)+$/.test(document.text)) {
+    console.log(chalk.yellow(`${document.parentDocument} > ${document.title} is empty. It will be skipped.`));
+    return false;
+  };
+
+  if (process.env.MAX_DOC_SIZE && document.text.length > parseInt(process.env.MAX_DOC_SIZE)) {
+    console.log(chalk.red(`${document.parentDocument} > ${document.title} is exceeds the size limit. It will be skipped.`));
+    return false;
+  };
+
+  const trimmedText = document.text.trim();
+  const hasOtherContent = trimmedText.length > 0 && !/^\s*$/.test(trimmedText);
+  if (!hasOtherContent) {
+    console.log(chalk.yellow(`${document.parentDocument} > ${document.title} is empty. It will be skipped.`));
+    return false;
+  }
+  return true;
+}
+
 export const generateDocumentChunks = async (document: any) => {
+  // Some texts have no information, so they should be skipped unnecesy LLM usage
+  if (!isDocumentValidForChunking(document)) return [];
+
   const chunkerPrompt = ChatPromptTemplate.fromTemplate(
     `
 The following json object is part of a kwoledge base of a tech company.
@@ -86,7 +126,7 @@ entities they refer to.
         })
     );
   } catch (e) {
-    console.error(`Failed to generate document chunks for ${document.title}`);
+    console.error(`${chalk.red(`Failed to generate document chunks for ${document.parentDocument} > ${document.title}:`)} ${e}`);
     return [];
   }
 };
