@@ -8,11 +8,11 @@ export const embeddingModel = new HuggingFaceInferenceEmbeddings({
 });
 
 export const chunckerModel = new ChatGroq({
-  model: 'deepseek-r1-distill-qwen-32b',
+  model: 'deepseek-r1-distill-llama-70b',
   temperature: 0,
 });
 
 export const ragModel = new ChatGroq({
-    model: 'deepseek-r1-distill-qwen-32b',
+    model: 'deepseek-r1-distill-llama-70b',
     temperature: 0,
   });
