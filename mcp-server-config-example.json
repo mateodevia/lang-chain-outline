@@ -1,0 +1,18 @@
+{
+    "mcpServers": {
+      "mcp-rag-outline": {
+        "command": "node",
+        "args": ["/path/to/your/project/dist/mcp-server.js"],
+        "env": {
+          "OUTLINE_URL": "YOUR_OUTLINE_URL",
+          "OUTLINE_API_KEY": "YOUR_OUTLINE_API_KEY",
+          "GROQ_API_KEY": "YOUR_GROQ_API_KEY",
+          "HUGGINGFACEHUB_API_KEY": "YOUR_HUGGINGFACE_API_KEY",
+          "PG_CONNECTION_STRING": "postgresql://username:password@localhost:5432/database_name",
+          "LANGSMITH_TRACING": "true",
+          "LANGSMITH_API_KEY": "YOUR_LANGSMITH_API_KEY",
+          "MAX_DOC_SIZE": "10000"
+        }
+      }
+    }
+  }
