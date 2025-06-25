@@ -7,7 +7,7 @@ import {
   ListToolsRequestSchema,
   Tool,
 } from '@modelcontextprotocol/sdk/types.js';
-import { getRAG } from './RAG';
+import { getRAG } from '../rag';
 
 interface RAGServerConfig {
   name: string;

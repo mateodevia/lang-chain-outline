@@ -6,9 +6,11 @@
   "scripts": {
     "build": "tsc",
     "ingest": "ts-node src/ingestion.ts",
-    "start": "ts-node src/chat.ts",
-    "mcp-server": "ts-node src/mcp-server.ts",
-    "mcp-server:build": "npm run build"
+    "dev:chat": "ts-node src/chat.ts",
+    "dev:mcp": "ts-node src/mcp-server.ts",
+    "start:ingest": "node dist/ingestion.js",
+    "start:chat": "node dist/chat.js", 
+    "start:mcp": "node dist/mcp-server.js"
   },
   "repository": {
     "type": "git",

@@ -1,9 +1,9 @@
 import { PGVectorStore } from '@langchain/community/vectorstores/pgvector';
-import { requestDocumentById, requestLatestOutlineDocs } from './outline-api/document-service';
-import { requestCollectionById } from './outline-api/collection-service';
+import { requestDocumentById, requestLatestOutlineDocs } from '../outline-api/document-service';
+import { requestCollectionById } from '../outline-api/collection-service';
 import { generateDocumentChunks } from './AgenticChunker';
 import { embeddingModel } from './LLMs';
-import { queryDB } from './database/database';
+import { queryDB } from '../database/database';
 import chalk from 'chalk';
 
 require('dotenv').config();

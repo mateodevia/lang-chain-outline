@@ -1,4 +1,4 @@
-import { getRAG } from './RAG';
+import { getRAG } from '../rag';
 import chalk from 'chalk';
 import inquirer from 'inquirer';
 import readline from 'readline';
