@@ -25,7 +25,7 @@ require('dotenv').config();
  * }
  * ```
  */
-const documentWasAlreadyLoaded = async(document: any) => {
+const documentWasAlreadyLoaded = async(document: OutlineDocument) => {
   const documentExists = await queryDB(`SELECT * FROM outline_docs WHERE metadata->>'id' = '${document.id}'`);
   if (documentExists?.length) {
     return true;
@@ -104,7 +104,7 @@ const addSemanticMeaningAndLoadDoc = async (document: OutlineDocument): Promise<
  * await loadDocsToVectorDB(documents);
  * ```
  */
-const loadDocsToVectorDB = async (docs: any[]) => {
+const loadDocsToVectorDB = async (docs: OutlineDocument[]) => {
   const vectorStore = await PGVectorStore.initialize(embeddingModel, {
     tableName: 'outline_docs',
     postgresConnectionOptions: {
@@ -115,16 +115,17 @@ const loadDocsToVectorDB = async (docs: any[]) => {
   await Promise.all(
     docs.map(async (document) => {
       if (await documentWasAlreadyLoaded(document)) {   
-        console.log(`Document ${document.parentDocument} > ${document.title} will be skipped because it was already uploaded. ${i}`);
+        console.log(`Document ${document.title} will be skipped because it was already uploaded. ${i}`);
         i++;
         return;
       };
       const extendedDocument = await addSemanticMeaningAndLoadDoc(document);
 
       const generatedDocs = await generateDocumentChunks(extendedDocument);
+      
       if (generatedDocs.length) await vectorStore.addDocuments(generatedDocs);
       
-      console.log(`Document ${document.parentDocument} > ${document.title} was processed. Total documents processed: ${i}`);
+      console.log(`Document ${document.title} was processed. Total documents processed: ${i}`);
       i++;
       return;
     })
