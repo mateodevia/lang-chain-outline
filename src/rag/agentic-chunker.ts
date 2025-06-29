@@ -2,6 +2,8 @@ import { ChatPromptTemplate } from '@langchain/core/prompts';
 import chalk from 'chalk';
 import { Document } from '@langchain/core/documents';
 import { chunckerModel } from './llm-config';
+import { OutlineDocument } from '../outline-api/types';
+import { ExtendedOutlineDocument } from './types';
 
 require('dotenv').config();
 
@@ -48,7 +50,7 @@ function extractJsonFromBackticks(input: string, identifier: string): string[] {
  * - Text length is within MAX_DOC_SIZE limit (if specified)
  * - Text contains non-whitespace characters after trimming
  */
-const isDocumentValidForChunking = (document: any) => {
+const isDocumentValidForChunking = (document: ExtendedOutlineDocument) => {
   if (!document.text) {
     console.log(chalk.yellow(`${document.parentDocument} > ${document.title}  is empty. It will be skipped.`));
     return false;
@@ -101,7 +103,7 @@ const isDocumentValidForChunking = (document: any) => {
  * });
  * ```
  */
-export const generateDocumentChunks = async (document: any) => {
+export const generateDocumentChunks = async (document: ExtendedOutlineDocument) => {
   // Some texts have no information, so they should be skipped unnecesy LLM usage
   if (!isDocumentValidForChunking(document)) return [];
 
@@ -185,12 +187,11 @@ If the input text is empty or contains no meaningful information, return an empt
             parentDocumentId: document.parentDocumentId,
             parentDocument: document.parentDocument,
             collectionId: document.collectionId,
-            collection: document.collection,
+            collection: document.collectionName,
             updatedAt: document.updatedAt,
             createdAt: document.createdAt,
             publishedAt: document.publishedAt,
             deletedAt: document.deletedAt,
-            tags: document.tags,
           },
         })
     );

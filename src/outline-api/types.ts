@@ -45,8 +45,8 @@ export interface OutlineDocument {
   updatedAt: string;
   createdBy: OutlineUser;
   updatedBy: OutlineUser;
-  collection?: OutlineCollection;
-  collaborators?: OutlineUser[];
+  collectionId: string;
+  parentDocumentId: string;
 }
 
 export interface OutlineApiResponse<T> {

@@ -5,6 +5,8 @@ import { generateDocumentChunks } from './agentic-chunker';
 import { embeddingModel } from './llm-config';
 import { queryDB } from '../database/database';
 import chalk from 'chalk';
+import { OutlineDocument } from '../outline-api/types';
+import { ExtendedOutlineDocument } from './types';
 
 require('dotenv').config();
 
@@ -32,43 +34,45 @@ const documentWasAlreadyLoaded = async(document: any) => {
 }
 
 /**
- * Enriches a document with semantic meaning by adding parent document and collection information,
- * then generates chunks and loads them into the vector store.
+ * Enriches a document with semantic meaning by adding parent document and collection information.
  * 
  * This function performs the following steps:
  * 1. Fetches parent document title if parentDocumentId exists
- * 2. Fetches collection name if collectionId exists  
- * 3. Generates semantic chunks using AI decomposition
- * 4. Adds the generated chunks to the vector store
+ * 2. Fetches collection name if collectionId exists
+ * 3. Returns the enriched document
  * 
- * @param document - The document object to process and load
+ * @param document - The document object to enrich
  * @param document.parentDocumentId - Optional ID of the parent document
  * @param document.collectionId - Optional ID of the collection
- * @param vectorStore - The PGVectorStore instance to add documents to
- * @returns Promise that resolves when the document has been processed and loaded
+ * @returns Promise that resolves to the enriched document with parent and collection info
  * 
- * @throws Will throw an error if API requests fail or vector store operations fail
+ * @throws Will throw an error if API requests to fetch parent or collection info fail
  * 
  * @example
  * ```typescript
- * await addSemanticMeaningAndLoadDoc(document, vectorStore);
+ * const extendedDocument = await addSemanticMeaningAndLoadDoc(document);
  * ```
  */
-const addSemanticMeaningAndLoadDoc = async (document: any, vectorStore: PGVectorStore) => {
+const addSemanticMeaningAndLoadDoc = async (document: OutlineDocument): Promise<ExtendedOutlineDocument> => {
+  const extendedDocument: ExtendedOutlineDocument = {
+    ...document,
+    parentDocument: '',
+    collectionName: ''
+  };
+
   // Add parent document title to add more semantic meaning to the generated documents
   if (document.parentDocumentId) {
     const parentDocument = await requestDocumentById(document.parentDocumentId);
-    document.parentDocument = parentDocument.title;
+    extendedDocument.parentDocument = parentDocument.title;
   }
 
   // Add collection title to add more semantic meaning to the generated documents
   if (document.collectionId) {
     const collection = await requestCollectionById(document.collectionId);
-    document.collection = collection.name;
+    extendedDocument.collectionName = collection.name;
   }
 
-  const generatedDocs = await generateDocumentChunks(document);
-  if (generatedDocs.length) await vectorStore.addDocuments(generatedDocs);
+  return extendedDocument;
 }
 
 /**
@@ -78,12 +82,21 @@ const addSemanticMeaningAndLoadDoc = async (document: any, vectorStore: PGVector
  * 1. Initializes a connection to the PostgreSQL vector store
  * 2. Processes documents in parallel, skipping already loaded ones
  * 3. Enriches documents with semantic meaning and generates chunks
- * 4. Logs progress for each processed document
+ * 4. Loads generated chunks into the vector store
+ * 5. Logs progress for each processed document
  * 
- * @param docs - Array of document objects to process and load
- * @returns Promise that resolves when all documents have been processed
+ * @param docs - Array of document objects to process and load. Each document should have:
+ *   - id: Unique identifier
+ *   - title: Document title
+ *   - text: Document content
+ *   - parentDocumentId?: Optional ID of parent document
+ *   - collectionId?: Optional ID of collection
+ * @returns Promise<void> Resolves when all documents have been processed
  * 
- * @throws Will throw an error if vector store initialization fails
+ * @throws Will throw an error if:
+ * - Vector store initialization fails
+ * - Document processing fails
+ * - Vector store operations fail
  * 
  * @example
  * ```typescript
@@ -106,7 +119,11 @@ const loadDocsToVectorDB = async (docs: any[]) => {
         i++;
         return;
       };
-      await addSemanticMeaningAndLoadDoc(document, vectorStore);
+      const extendedDocument = await addSemanticMeaningAndLoadDoc(document);
+
+      const generatedDocs = await generateDocumentChunks(extendedDocument);
+      if (generatedDocs.length) await vectorStore.addDocuments(generatedDocs);
+      
       console.log(`Document ${document.parentDocument} > ${document.title} was processed. Total documents processed: ${i}`);
       i++;
       return;
