@@ -18,10 +18,24 @@ interface QueryState {
   question: string;
 }
 
+/**
+ * Model Context Protocol (MCP) server for RAG (Retrieval-Augmented Generation) functionality.
+ * 
+ * This class implements an MCP server that exposes RAG capabilities as tools that can be
+ * called by MCP clients. It provides both standard and streaming query capabilities
+ * for interacting with the knowledge base.
+ */
 class RAGMCPServer {
   private server: Server;
   private ragAgent: any;
 
+  /**
+   * Creates a new RAGMCPServer instance.
+   * 
+   * @param config - Configuration object for the server
+   * @param config.name - The name of the MCP server
+   * @param config.version - The version of the MCP server
+   */
   constructor(config: RAGServerConfig) {
     this.server = new Server(
       {
@@ -39,6 +53,16 @@ class RAGMCPServer {
     this.setupErrorHandling();
   }
 
+  /**
+   * Initializes the RAG agent if it hasn't been initialized yet.
+   * 
+   * This method is called lazily when the first tool request is received
+   * to avoid initializing the RAG system during server startup.
+   * 
+   * @returns Promise that resolves when the RAG agent is ready
+   * 
+   * @throws Will throw an error if RAG initialization fails
+   */
   private async initializeRAG() {
     if (!this.ragAgent) {
       console.error('Initializing RAG agent...');
@@ -46,6 +70,16 @@ class RAGMCPServer {
     }
   }
 
+  /**
+   * Sets up tool handlers for the MCP server.
+   * 
+   * Configures handlers for:
+   * - ListToolsRequest: Returns available tools (rag_query and rag_stream_query)
+   * - CallToolRequest: Executes the requested tool with provided arguments
+   * 
+   * Both tools accept a 'question' parameter and return AI-generated answers
+   * based on the knowledge base content.
+   */
   private setupToolHandlers() {
     this.server.setRequestHandler(ListToolsRequestSchema, async () => {
       return {
@@ -161,6 +195,13 @@ class RAGMCPServer {
     });
   }
 
+  /**
+   * Sets up error handling for the MCP server.
+   * 
+   * Configures:
+   * - Server error handler for logging MCP-related errors
+   * - SIGINT handler for graceful shutdown when the process is interrupted
+   */
   private setupErrorHandling() {
     this.server.onerror = (error) => {
       console.error('[MCP Error]', error);
@@ -172,6 +213,16 @@ class RAGMCPServer {
     });
   }
 
+  /**
+   * Starts the MCP server using stdio transport.
+   * 
+   * This method connects the server to stdio transport, allowing it to
+   * communicate with MCP clients through standard input/output streams.
+   * 
+   * @returns Promise that resolves when the server is running
+   * 
+   * @throws Will throw an error if server startup fails
+   */
   async run() {
     const transport = new StdioServerTransport();
     await this.server.connect(transport);

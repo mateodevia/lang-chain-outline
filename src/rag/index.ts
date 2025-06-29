@@ -19,7 +19,28 @@ const StateAnnotation = Annotation.Root({
   answer: Annotation<string>,
 });
 
-
+/**
+ * Creates and configures a Retrieval-Augmented Generation (RAG) agent using LangGraph.
+ * 
+ * This function sets up a complete RAG pipeline that:
+ * 1. Retrieves relevant documents from a PostgreSQL vector store
+ * 2. Uses retrieved context to generate answers using an LLM
+ * 3. Returns a compiled graph that can process questions and return answers
+ * 
+ * The RAG system uses a MultiVectorRetriever with hierarchical document chunking,
+ * where child chunks are used for retrieval but parent documents provide context.
+ * 
+ * @returns Promise that resolves to a compiled StateGraph representing the RAG system
+ * 
+ * @throws Will throw an error if the vector store initialization fails or if environment variables are missing
+ * 
+ * @example
+ * ```typescript
+ * const rag = await getRAG();
+ * const result = await rag.invoke({ question: "What is the API authentication method?" });
+ * console.log(result.answer); // AI-generated answer based on retrieved documents
+ * ```
+ */
 export const getRAG = async () => {
   const promptTemplate = await pull<ChatPromptTemplate>('rlm/rag-prompt');
 

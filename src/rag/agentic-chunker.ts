@@ -73,6 +73,34 @@ const isDocumentValidForChunking = (document: any) => {
   return true;
 }
 
+/**
+ * Generates semantic chunks from a document using AI-powered decomposition.
+ * 
+ * This function takes a document and uses an LLM to break it down into atomic, 
+ * self-contained propositions in Spanish. Each proposition represents a single 
+ * piece of information that can be understood independently.
+ * 
+ * @param document - The document object to chunk, must contain text content and metadata
+ * @param document.text - The markdown-formatted content to decompose
+ * @param document.title - The document title
+ * @param document.id - Unique document identifier
+ * @param document.parentDocument - Parent document name for context
+ * @param document.collection - Collection name for context
+ * @returns Promise that resolves to an array of Document objects with chunked content and metadata
+ * 
+ * @throws Will log errors and return empty array if chunking fails or document is invalid
+ * 
+ * @example
+ * ```typescript
+ * const chunks = await generateDocumentChunks({
+ *   id: 'doc-123',
+ *   title: 'API Guide',
+ *   text: '# Authentication\nOur API uses JWT tokens...',
+ *   parentDocument: 'Developer Documentation',
+ *   collection: 'Tech Docs'
+ * });
+ * ```
+ */
 export const generateDocumentChunks = async (document: any) => {
   // Some texts have no information, so they should be skipped unnecesy LLM usage
   if (!isDocumentValidForChunking(document)) return [];
