@@ -2,11 +2,9 @@ import { ChatPromptTemplate } from '@langchain/core/prompts';
 import { pull } from 'langchain/hub';
 import { Document } from '@langchain/core/documents';
 import { Annotation } from '@langchain/langgraph';
-import { PGVectorStore } from '@langchain/community/vectorstores/pgvector';
 import { StateGraph } from "@langchain/langgraph";
-import { InMemoryStore } from "@langchain/core/stores";
-import { MultiVectorRetriever } from "langchain/retrievers/multi_vector";
-import { embeddingModel, ragModel } from './llm-config';
+import { ragModel } from './llm-config';
+import { getRetriever } from './retriever';
 require('dotenv').config();
 
 /**
@@ -37,38 +35,35 @@ const StateAnnotation = Annotation.Root({
  * Retrieves relevant documents from the vector store based on the input question.
  * 
  * This function:
- * 1. Initializes a connection to the PostgreSQL vector store
- * 2. Creates a MultiVectorRetriever for hierarchical document retrieval
- * 3. Performs similarity search using the input question
- * 4. Returns retrieved documents as context
+ * 1. Gets a configured retriever instance
+ * 2. Performs similarity search using the input question
+ * 3. Returns retrieved documents as context
  * 
  * The retriever is configured to:
  * - Use parent-child relationships between document chunks
  * - Retrieve up to 20 child chunks and 5 parent documents
  * - Store binary data in memory
+ * - Use PGVector for document storage and similarity search
  * 
  * @param state - Input state containing the question
  * @param state.question - The user's question to search for relevant documents
  * @returns Promise resolving to an object with retrieved context documents
  * 
- * @throws Will throw an error if vector store initialization fails
+ * @throws Will throw an error if:
+ * - Vector store initialization fails
+ * - Database connection fails
+ * - Environment variables are missing
+ * 
+ * @example
+ * ```typescript
+ * const result = await retrieve({
+ *   question: "How do I authenticate?"
+ * });
+ * // Returns { context: [Document, Document, ...] }
+ * ```
  */
 const retrieve = async (state: typeof InputStateAnnotation.State) => {
-    
-  const vectorStore = await PGVectorStore.initialize(embeddingModel, {
-    tableName: 'outline_docs',
-    postgresConnectionOptions: {
-      connectionString: process.env.PG_CONNECTION_STRING,
-    },
-  });
-
-  const retriever = new MultiVectorRetriever({
-    vectorstore: vectorStore,
-    byteStore: new InMemoryStore<Uint8Array>(),
-    idKey: 'parent_id',
-    childK: 20,
-    parentK: 5,
-  });
+  const retriever = await getRetriever();
   const vectorstoreResult = await retriever.vectorstore.similaritySearch(state.question);
   return { context: vectorstoreResult };
 };
