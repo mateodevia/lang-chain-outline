@@ -1,5 +1,5 @@
 {
-  "name": "lang-chain-outline",
+  "name": "agentic-rag-outline",
   "version": "1.0.0",
   "description": "",
   "main": "src/ingestion.ts",
