@@ -23,7 +23,7 @@
   },
   "homepage": "https://github.com/mateodevia/lang-chain-outline#readme",
   "dependencies": {
-    "@huggingface/inference": "^2.8.1",
+    "@huggingface/inference": "^4.1.0",
     "@langchain/community": "^0.3.28",
     "@langchain/core": "^0.3.40",
     "@langchain/groq": "^0.1.3",

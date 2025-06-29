@@ -52,8 +52,8 @@ This system creates a bridge between your Outline documentation and AI, enabling
 ### 1. Installation
 
 ```bash
-git clone https://github.com/mateodevia/rag-outline.git
-cd rag-outline
+git git clone https://github.com/mateodevia/agentic-rag-outline.git
+cd agentic-rag-outline
 npm install
 ```
 
