@@ -1,15 +1,16 @@
 import axios from 'axios';
+import { OutlineDocumentsListResponse, OutlineDocument } from './types';
 
 export const requestLatestOutlineDocs = async (p: {
   page: number;
   pageSize: number;
-}) => {
+}): Promise<OutlineDocumentsListResponse> => {
   const { page, pageSize } = p;
 
   console.log(
     `Requesting page ${page}: offset=${page * pageSize}, limit=${pageSize}`
   );
-  return (await axios.post(
+  const response = await axios.post(
     `${process.env.OUTLINE_URL}/api/documents.list`,
     {
       offset: page * pageSize,
@@ -25,11 +26,12 @@ export const requestLatestOutlineDocs = async (p: {
         Authorization: `Bearer ${process.env.OUTLINE_API_KEY}`,
       },
     }
-  )).data;
+  );
+  return response.data;
 };
 
-export const requestDocumentById = async (documentId: string) => {
-    return (await axios.post(
+export const requestDocumentById = async (documentId: string): Promise<OutlineDocument> => {
+    const response = await axios.post(
         `${process.env.OUTLINE_URL}/api/documents.info`,
         {
             id: documentId,
@@ -41,5 +43,6 @@ export const requestDocumentById = async (documentId: string) => {
                 Authorization: `Bearer ${process.env.OUTLINE_API_KEY}`,
             },
         }
-    )).data.data;
+    );
+    return response.data.data;
 };

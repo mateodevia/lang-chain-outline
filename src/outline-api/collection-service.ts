@@ -1,6 +1,7 @@
 import axios from 'axios';
+import { OutlineCollection } from './types';
 
-export const requestCollectionById = async (collectionId: string) => {
+export const requestCollectionById = async (collectionId: string): Promise<OutlineCollection> => {
     return (await axios.post(
         `${process.env.OUTLINE_URL}/api/collections.info`,
         {
