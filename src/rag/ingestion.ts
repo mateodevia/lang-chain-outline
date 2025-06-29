@@ -1,8 +1,8 @@
 import { PGVectorStore } from '@langchain/community/vectorstores/pgvector';
 import { requestDocumentById, requestLatestOutlineDocs } from '../outline-api/document-service';
 import { requestCollectionById } from '../outline-api/collection-service';
-import { generateDocumentChunks } from './AgenticChunker';
-import { embeddingModel } from './LLMs';
+import { generateDocumentChunks } from './agentic-chunker';
+import { embeddingModel } from './llm-config';
 import { queryDB } from '../database/database';
 import chalk from 'chalk';
 
@@ -26,7 +26,7 @@ const addSemanticMeaningAndLoadDoc = async (document: any, vectorStore: PGVector
   // Add collection title to add more semantic meaning to the generated documents
   if (document.collectionId) {
     const collection = await requestCollectionById(document.collectionId);
-    document.collection = collection.title;
+    document.collection = collection.name;
   }
 
   const generatedDocs = await generateDocumentChunks(document);

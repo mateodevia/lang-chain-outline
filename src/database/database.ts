@@ -1,5 +1,4 @@
-import { Client } from 'pg';
-import pool from './singletonConection';
+import pool from './singleton-connection';
 
 export const queryDB = async (query: string) => {
   const client = await pool.connect(); // Get a connection from the pool

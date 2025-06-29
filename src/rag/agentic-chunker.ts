@@ -1,7 +1,7 @@
 import { ChatPromptTemplate } from '@langchain/core/prompts';
 import chalk from 'chalk';
 import { Document } from '@langchain/core/documents';
-import { chunckerModel } from './LLMs';
+import { chunckerModel } from './llm-config';
 
 require('dotenv').config();
 

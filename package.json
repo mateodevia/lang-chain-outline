@@ -5,12 +5,12 @@
   "main": "src/ingestion.ts",
   "scripts": {
     "build": "tsc",
-    "ingest": "ts-node src/ingestion.ts",
-    "dev:chat": "ts-node src/chat.ts",
-    "dev:mcp": "ts-node src/mcp-server.ts",
-    "start:ingest": "node dist/ingestion.js",
-    "start:chat": "node dist/chat.js", 
-    "start:mcp": "node dist/mcp-server.js"
+    "dev:ingest": "ts-node src/rag/ingestion.ts",
+    "dev:chat": "ts-node src/interfaces/chat.ts",
+    "dev:mcp": "ts-node src/interfaces/mcp-server.ts",
+    "start:ingest": "npm run build && node dist/rag/ingestion.js",
+    "start:chat": "npm run build && node dist/interfaces/chat.js", 
+    "start:mcp": "npm run build && node dist/interfaces/mcp-server.js"
   },
   "repository": {
     "type": "git",

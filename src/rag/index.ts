@@ -6,7 +6,7 @@ import { PGVectorStore } from '@langchain/community/vectorstores/pgvector';
 import { StateGraph } from "@langchain/langgraph";
 import { InMemoryStore } from "@langchain/core/stores";
 import { MultiVectorRetriever } from "langchain/retrievers/multi_vector";
-import { embeddingModel, ragModel } from './LLMs';
+import { embeddingModel, ragModel } from './llm-config';
 require('dotenv').config();
 
 const InputStateAnnotation = Annotation.Root({
