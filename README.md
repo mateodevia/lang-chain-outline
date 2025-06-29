@@ -186,8 +186,7 @@ To get more information on how to setup your MCP server check the `MCP-README.md
 ## 🛠️ Technology Stack
 
 - **TypeScript/Node.js**: Core runtime and type safety
-- **LangChain**: Document processing and LLM operations
-- **LangGraph**: RAG workflow orchestration
+- **Lang Chain & LangGraph**: RAG workflow orchestration and LLM management
 - **PostgreSQL + pgvector**: Vector database for embeddings
 - **Model Context Protocol**: Standardized AI tool integration
 - **Multiple LLMs**: Easily interchangeble LLMs for each process
